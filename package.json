@@ -1,0 +1,23 @@
+{
+  "name": "phat",
+  "version": "1.0.0",
+  "description": "a bot application",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "jp",
+  "license": "ISC",
+  "dependencies": {
+    "@discordjs/voice": "^0.6.0",
+    "axios": "^0.21.1",
+    "discord.js": "^13.1.0",
+    "ffmpeg": "^0.0.4",
+    "ffmpeg-static": "^4.4.0",
+    "node-gtts": "^2.0.2",
+    "opusscript": "^0.0.8",
+    "request": "^2.88.2",
+    "ytdl-core": "^4.9.1",
+    "ytsr": "^3.5.3"
+  }
+}

@@ -1,0 +1,53 @@
+{
+    "token": "insert your token",
+    "name": "Pery",
+    "status": "Stand By",
+    "prefix": "p",
+    "apis": {
+      "dog": "https://dog.ceo/api/breeds/image/random",
+      "meme": "https://api.imgflip.com/get_memes",
+      "translate": "https://google-translate1.p.rapidapi.com/language/translate/v2",
+      "activity": "https://www.boredapi.com/api/activity/"
+    },
+    "commands": {
+      "help": "help",
+      "randomdog": "dog",
+      "randommeme": "meme",
+      "randomactivity": "activity",
+      "covidinfo": "covid",
+      "idtoen": "ie",
+      "entoid": "ei",
+      "playmusic": "play",
+      "skipmusic": "skip",
+      "stopmusic": "stop",
+      "listmusic": "queue",
+      "pausemusic":"pause",
+      "continuemusic":"continue",
+      "speech":"speech"
+    },
+    "commandParameters": {
+      "idtoen": "sentence",
+      "entoid": "sentence",
+      "playmusic": "url/youtube search",
+      "covidinfo": "country",
+      "speech": "speech"
+    },
+    "commandDescriptions": {
+      "help": "list all commands available",
+      "randomdog": "get a random image of dog",
+      "randommeme": "get a random meme image",
+      "randomactivity": "get a random activity to do",
+      "covidinfo": "get data about covid",
+      "idtoen": "translate from indonesia to english",
+      "entoid": "translate from english to indonesia",
+      "playmusic": "play a music from youtube",
+      "skipmusic": "skip current music",
+      "stopmusic": "stop playing music and clear the music queues",
+      "listmusic": "list all queued musics.",
+      "pausemusic":"pause current player",
+      "continuemusic":"continue playing the currently paused music",
+      "speech":"play speech from a text"
+  
+    }
+  }
+  
