@@ -1,15 +1,25 @@
 const config = require("./config.json");
+const credentials = require("./my_credentials.json");
 const fetch = require("node-fetch");
 const Discord = require("discord.js");
+const fs = require("fs");
+const path = require("path");
+
+
 const client = new Discord.Client({
   autoReconnect: true,
   presence: { status: "online" },
   intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_VOICE_STATES"],
 });
+
 // const request = require('request')
 const qs = require("querystring");
 const http = require("https");
 const ytdl = require("ytdl-core");
+
+var gttsid = require("node-gtts")("id");
+var gttsen = require("node-gtts")("en");
+var gttsjp = require("node-gtts")("ja");
 
 const {
   joinVoiceChannel,
@@ -27,66 +37,194 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
       queue.delete(oldState.guild.id);
     }
   }
+  // if(newState.member.id=='727839410212569128'){
+  //   if(newState.member.voice)newState.member.voice.disconnect();
+  // }
 });
 
-client.on("messageCreate", (msg) => {
+client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return;
-  let arg = msg.content;
-  if (!arg.startsWith(config.prefix)) return;
-  arg = arg.substring(2, arg.length);
-  args = arg.split(" ");
 
+  let arg = msg.content;
+  if(!arg)return;
+  if (!arg[0].toLowerCase == "p") return;
+  arg = arg.substring(1, arg.length);
+  let args = arg.split(" ");
+
+  args[0] = args[0].toLowerCase();
+  makeDecision(msg, args, arg, false);
+});
+
+function makeDecision(msg, args, arg, admin) {
+  const commands = config.commands;
   switch (args[0]) {
-    case config.commands.randomdog:
+    case "sudo":
+      args.shift();
+      arg = arg.substring("5", arg.length);
+      admin = grantSudo(msg);
+      makeDecision(msg, args, arg, true);
+      break;
+    case commands.randomdog:
       randomDogCommand(msg);
       break;
-    case config.commands.randommeme:
+    case commands.randommeme:
       randomMemeCommand(msg);
       break;
-    case config.commands.randomactivity:
+    case commands.randomactivity:
       randomActivityCommand(msg);
       break;
-    case config.commands.help:
+    case commands.help:
       helpCommand(msg);
       break;
-    case config.commands.covidinfo:
+    case commands.covidinfo:
       covidCommand(arg, msg);
       break;
-    case config.commands.idtoen:
-      arg = arg.substring(3, arg.length);
-      translate("id", "en", arg, msg);
+    case commands.translate:
+      translate(args, arg, msg);
       break;
-    case config.commands.entoid:
-      arg = arg.substring(3, arg.length);
-      translate("en", "id", arg, msg);
-      break;
-    case config.commands.playmusic:
+    case commands.playmusic:
       playMusic(msg, arg);
       break;
-    case config.commands.stopmusic:
+    case commands.stopmusic:
       stopCommand(msg);
       break;
-    case config.commands.skipmusic:
+    case commands.skipmusic:
       skipCommand(msg);
       break;
-    case config.commands.listmusic:
+    case commands.listmusic:
       queueCommand(msg);
       break;
-    case config.commands.pausemusic:
+    case commands.pausemusic:
       pauseCommand(msg);
       break;
-    case config.commands.continuemusic:
+    case commands.continuemusic:
       continueCommand(msg);
       break;
-    case config.commands.speech:
-      playSpeech(msg,arg);
+    case commands.speech:
+      speechCommand(msg, args, arg);
+      break;
+    case commands.cricket:
+      playMusic(msg, "play https://www.youtube.com/watch?v=K8E_zMLCRNg");
+      break;
+    case commands[202]:
+      if (admin) command202(msg);
+      else {
+        msg.channel.send("Only root can use this command (try using sudo).");
+      }
       break;
   }
-});
+
+}
+
+
+
+const Drive = require("node-google-drive");
+const rootFolder = config["root-folder-202"];
+const drive202 = new Drive({ ROOT_FOLDER: rootFolder });
+
+var files202;
+async function initDrive() {
+  let gdrive = await drive202.useServiceAccountAuth(credentials);
+  files202 = await drive202.listFiles(rootFolder, null, false);
+}
+
+initDrive();
+
+const admins = [
+  "727839410212569128",
+  "267590135162470401",
+  "640864098271100929",
+  "272641788789915648",
+  "659069308617621514",
+  "636201389940408341",
+  "367296175096725506",
+  "646164977396482090",
+  "295384747402592257",
+];
+function grantSudo(msg) {
+  let admin = admins.includes(msg.author.id);
+  if (!admin) message.reply("Sorry, you lack the permission...");
+  return admin;
+}
 
 client.login(config.token);
 
-async function translate(sourceL, targetL, translateString, e) {
+process.stdin.resume();
+
+function exitHandler(options, exitCode) {
+  if (options.cleanup) {
+    const dir = "./assets/202";
+    fs.readdirSync(dir).forEach((file) =>
+      fs.unlink(path.join(dir, file), (err) => {
+        if (err) throw err;
+      })
+    );
+    // (err, files) => {
+    //   console.log('masuk')
+    //   if (err) throw err;
+    //   for (const file of files) {
+    //     console.log('masuk')
+    //     fs.unlink(path.join(dir, file), (err) => {
+    //       if (err) throw err;
+    //     });
+    //   }
+    // }
+  }
+  if (exitCode || exitCode === 0) console.log(exitCode);
+  if (options.exit) process.exit();
+}
+
+//do something when app is closing
+process.on("exit", exitHandler.bind(null, { cleanup: true }));
+
+//catches ctrl+c event
+process.on("SIGINT", exitHandler.bind(null, { exit: true }));
+
+// catches "kill pid" (for example: nodemon restart)
+process.on("SIGUSR1", exitHandler.bind(null, { exit: true }));
+process.on("SIGUSR2", exitHandler.bind(null, { exit: true }));
+
+//catches uncaught exceptions
+process.on("uncaughtException", exitHandler.bind(null, { exit: true }));
+
+var flag = 0;
+async function command202(msg) {
+  let currFile =
+    files202.files[Math.floor(Math.random() * files202.files.length)];
+  let path = "./assets/202/" + currFile.name;
+  while (flag != files202.files.length && fs.existsSync(path)) {
+    currFile =
+      files202.files[Math.floor(Math.random() * files202.files.length)];
+    path = "./assets/202/" + currFile.name;
+  }
+  try {
+    if (!fs.existsSync(path)) {
+      //file exists
+      await drive202.getFile(currFile, "./assets/202");
+      msg.channel.send({
+        files: [path],
+        content: currFile.name,
+      });
+      flag++;
+    } else {
+      await msg.channel.send({
+        files: [path],
+        content: currFile.name,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+
+
+async function translate(args, translateString, e) {
+  if (!args[1] || !args[2] || args[1].length > 2 || args[2].length > 2) {
+    e.channel.send("Please input a valid syntax (ex: ptranslate id en telor)");
+  }
+  translateString = translateString.substring(16, translateString.length);
+
   const options = {
     method: "POST",
     hostname: "google-translate1.p.rapidapi.com",
@@ -109,16 +247,28 @@ async function translate(sourceL, targetL, translateString, e) {
     });
 
     res.on("end", function () {
-      const body = Buffer.concat(chunks);
-      e.channel.send(
-        JSON.parse(body.toString()).data.translations[0].translatedText
-      );
+      let body = Buffer.concat(chunks);
+      body = JSON.parse(body.toString());
+      if (typeof body.data.translations === "undefined") {
+        e.channel.send(
+          "Please input a valid language code (ex: ptranslate id en telor)"
+        );
+      }
+      // if(typeof body.translations!=="undefined")
+      e.channel.send(body.data.translations[0].translatedText);
     });
   });
 
-  req.write(
-    qs.stringify({ q: translateString, target: targetL, source: sourceL })
-  );
+  try {
+    req.write(
+      qs.stringify({ q: translateString, target: args[2], source: args[1] })
+      // qs.stringify({ q: "telor", target: "en", source: "id" })
+    );
+  } catch {
+    e.channel.send(
+      "Please input a valid language code (ex: ptranslate id en telor)"
+    );
+  }
   req.end();
 }
 
@@ -238,52 +388,90 @@ async function randomActivityCommand(e) {
     e.channel.send({ embeds: [embedActivity] });
   }
 }
+
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
+  const Guilds = client.guilds.cache.map((guild) => guild.name);
+  console.log(Guilds);
+
+  // console.log(client.fetchGuildPreview())
 });
 
 const queue = new Map();
-var gtts = require('node-gtts')('en');
-async function play(guild, curr) {
+
+function play(guild, curr) {
   song = curr.songs[0];
 
-  if (song === undefined) {
-    curr.connection.disconnect();
+  if (song === undefined||!song||typeof song==="undefined") {
     queue.delete(guild.id);
+
+    curr.timeOut = setTimeout(() => {
+      curr.connection.disconnect();
+    }, 1800000);
     return;
+  } else {
+    if (curr.timeOut) {
+      clearTimeout(curr.timeOut);
+      curr.timeOut=null;
+    }
   }
   let rs;
-  if (curr.type == 0) {
+  if (song.type === 0) {
     rs = createAudioResource(
       ytdl(song.url, {
         filter: "audio",
         quality: "highest",
+        
       })
     );
   } else {
-    rs = createAudioResource(gtts.stream(song.text));
+    try{
+      
+      switch(song.sl){
+        case 'id':
+          rs = createAudioResource(gttsid.stream(song.text));
+          break;
+          case 'en':
+            
+        rs = createAudioResource(gttsen.stream(song.text));
+            break;
+            case 'ja':
+              rs = createAudioResource(gttsjp.stream(song.text));
+              break;
+                
+      }
+      
+    }catch{
+      curr.textChannel.send("I cannot play "+song.title);
+      curr.songs.shift();
+      play(guild,curr);
+      return;
+    }
   }
-
   curr.player = createAudioPlayer({
     behaviors: {
       noSubscriber: NoSubscriberBehavior.Pause,
+      
     },
   });
+  
+    curr.player.play(rs);
+    curr.connection.subscribe(curr.player);
+    curr.player.on("stateChange", (oldState, newState) => {
+      if (newState.status === "idle") {
+        curr.songs.shift();
+        play(guild, curr);
+      }
+    });
+    curr.player.on("error", (error) => {
+      console.log(error);
+  
+    });
+  
+    curr.textChannel.send(`Now playing: **${song.title}**`);
+  
 
-  curr.player.play(rs);
 
-  curr.connection.subscribe(curr.player);
-  curr.player.on("stateChange", (oldState, newState) => {
-    if (newState.status === "idle") {
-      curr.songs.shift();
-      play(guild, curr);
-    }
-  });
-  curr.player.on("error", (error) => {
-    console.log(error);
-  });
-
-  curr.textChannel.send(`Now playing: **${song.title}**`);
 }
 
 async function validateUrl(arg, msg) {
@@ -293,6 +481,7 @@ async function validateUrl(arg, msg) {
     if (arg.match(regExp)) {
       return arg;
     }
+
   }
 
   msg.channel.send("Searching " + arg);
@@ -316,12 +505,12 @@ async function validateUrl(arg, msg) {
 function vcValidation(msg) {
   const VC = msg.member.voice.channel;
   if (!VC) {
-    msg.channel.send("You must be in a voice channel.");
+    msg.channel.send("You must be in a voice channel to use this command");
     return false;
   }
   const permissions = VC.permissionsFor(msg.client.user);
   if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-    msg.channel.send("Need permission to join and talk.");
+    msg.channel.send("I don't have the permission to join and talk.");
     return false;
   }
   return true;
@@ -360,34 +549,52 @@ async function playMusic(msg, arg) {
   addToQueue(msg, curr);
 }
 
-function getSpeech(msg, arg) {
+function getSpeech(msg, arg, language) {
   if (!arg) return false;
-  try {
-    const curr = {
-      title: "Speech: " + arg,
-      text: arg,
-      duration: "Unknown",
-      link: "-",
-      type: 1,
-      requester: msg.author.id,
-    };
-    return curr;
-  } catch (e) {
-    msg.channel.send("Please enter a valid url");
-    return false;
-  }
+  const curr = {
+    title: "Speech: " + arg,
+    text: arg,
+    duration: "Unknown",
+    link: "-",
+    type: 1,
+    sl: language,
+    requester: msg.author.id,
+  };
+  return curr;
 }
 
-async function playSpeech(msg, arg) {
-  if (!arg.includes("speech ")) {
-    msg.channel.send("Please enter a valid syntax: p speech [speechstring]");
+async function speechCommand(msg, args, arg) {
+  if (!vcValidation(msg)) {
     return;
   }
+  if (arg.lengt < 15) {
+    msg.channel.send(
+      "Please enter a valid syntax: pspeech [language] [speechstring]\nAvailable languages: id(indonesia), en(english), ja(japanese)"
+    );
+    return;
+  }
+  let currLanguage;
+  switch (args[1].toLowerCase()) {
+    case "en":
+      currLanguage = "en";
+      break;
+    case "id":
+      currLanguage = "id";
+      break;
+      case "ja":
+        currLanguage="ja";
+        break;
+    default:
+      msg.channel.send(
+        "Please enter a valid syntax: pspeech [language] [speechstring]\nAvailable languages: id(Indonesia), en(English)"
+      );
+      return;
+  }
+  arg = arg.substring("9", arg.length);
 
-  arg = arg.substring(7, arg.length);
-  if (!vcValidation(msg)) return;
-  const curr = getSpeech(msg, arg);
+  const curr = getSpeech(msg, arg, currLanguage);
   if (!curr) return;
+
   addToQueue(msg, curr);
 }
 
@@ -407,10 +614,13 @@ async function addToQueue(msg, curr) {
       volume: 1,
       playing: true,
       player: null,
+      timeOut: null
+
     };
     queue.set(msg.guild.id, queueConstruct);
     try {
       queueConstruct.songs.push(curr);
+
       try {
         const connection = await joinVoiceChannel({
           channelId: VC.id,
@@ -536,6 +746,7 @@ function helpCommand(msg) {
   let helpDesc = "";
   for (var key in commands) {
     helpDesc +=
+      "p" +
       commands[key] +
       (params[key] ? " [" + params[key] + "]" : "") +
       ": " +
@@ -548,7 +759,7 @@ function helpCommand(msg) {
     .setDescription(helpDesc)
     .addFields({
       name: "Bot Developer: ",
-      value: "JP20-2(https://jpv.my.id/)",
+      value: "[JP20-2](https://jpv.my.id/)",
     });
 
   msg.channel.send({ embeds: [embedHelp] });
