@@ -9,6 +9,9 @@
       "translate": "https://google-translate1.p.rapidapi.com/language/translate/v2",
       "activity": "https://www.boredapi.com/api/activity/"
     },
+    "api-tokens":{
+      "translate":"insert your google translate token"
+    },
     "commands": {
       "help": "help",
       "randomdog": "dog",

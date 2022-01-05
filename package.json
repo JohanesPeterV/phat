@@ -15,10 +15,12 @@
     "dotenv": "^10.0.0",
     "ffmpeg": "^0.0.4",
     "ffmpeg-static": "^4.4.0",
+    "node-fetch": "^2.6.1",
     "node-google-drive": "^1.1.2",
     "node-gtts": "^2.0.2",
     "opusscript": "^0.0.8",
     "request": "^2.88.2",
+    "youtube-playlist-summary": "^2.1.6",
     "ytdl-core": "^4.9.1",
     "ytsr": "^3.5.3"
   }
